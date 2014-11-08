@@ -1,0 +1,176 @@
+#Geraldo Martinez
+#gm979351
+#Fri_1_40
+
+#all of the variable declarations
+		.data
+text:		.asciiz "Please enter Text String: "
+pattern:	.asciiz "Please enter Pattern String: "
+stringT:	.space	81 #stores inputted text string 
+stringP:	.space 	81 #stores inputted pattern string
+match:		.asciiz	"Yes, there is a match."
+no_match:	.asciiz	"No, there is no match."
+nl:		.asciiz "\n"
+index:		.asciiz "Starting index = "
+length:		.asciiz "Length of the longest partial match = "
+		.text
+		.globl main
+
+main:
+
+	#Prompts user for text string
+		li	$v0, 4
+		la	$a0, text
+		syscall
+
+	#reads the inputted string and stores it on stringT
+		la	$a0, stringT
+		li	$a1, 81
+		li	$v0, 8
+		syscall
+
+	#Prompts user for pattern string
+		li	$v0, 4
+		la	$a0, pattern
+		syscall
+
+	#reads the inputted string and stores is on stringP
+		la	$a0, stringP
+		li	$a1, 81
+		li	$v0, 8
+		syscall
+
+	#loads the addresses of stringT and stringP onto $5 and $6
+		la	$5, stringT
+		la	$6, stringP
+
+	#initializes all the registers used in my computations
+		li	$7, 0	#keeps track of the index of a perfect match
+		li	$8, 0	#Keeps track of the longest max
+		li	$9, 0	#keeps track of index of partial match
+		li	$10, 0	#makes sure $8 is more than this current count 
+		li	$15, 1	#used to sub 1 from the indexes
+
+	#goes through the text string
+text_loop:	lb	$11, ($5) #loads the unsigned bit onto $11
+		lb	$12, ($6) #loads the unsigned bit onto $12
+		addi	$7, $7, 1 #increments the index
+		addi	$5, $5, 1 #points to the next char on the text string
+		li	$10, 1 #loads 1 onto $10
+		beq	$11, 10, printNoMatch #if $11 equals to \nl, then no match was found.
+		beq	$12, $11, pattern_loop #if the two chars match, jumps to the pattern_loop
+		j	text_loop #jumps back to the beginning of this loop
+
+	#goes through the pattern string
+pattern_loop:	lb	$11, ($5) #reloads the text string onto $11 
+		addi	$6, $6, 1 #points to the next char in the pattern string
+		lb	$12, ($6) #reloads the pattern string onto $12
+		beq	$12, 10, printMatch #found a match if the pattern his the new line char
+		bne	$12, $11, reload #goes to reload if $12 and $11 are different
+		addi	$10, $10, 1 
+		addi	$5, $5, 1 #points to the next char in the text string
+		bgt	$10, $8, sumUp #jummps to sumUp if $10 > $8
+		j	pattern_loop #jumps back to the beginning of this loop
+
+	#resets the pointer of both strings
+reload:		la	$5, stringT #resets the pointer of the text string
+		add	$5, $5, $7 #points to the char in the position of the index
+		la	$6, stringP #resets the pointer of the pattern string
+		j	text_loop #jumps back into the text_loop
+
+	#used to find the value of the index in case of partial match
+sumUp:		add	$8, $0, $10 #adds the value of $10 to find out the max value
+		move	$9, $7 #loads the index into this new index for partial match
+		j	pattern_loop
+
+	#two different possible outcomes when there is a partial match or no match at all
+printNoMatch:
+		beq	$8, 0, printNoMatch1 #if $8 is zero, there is no match at all
+		bne	$8, 0,	printNoMatch2 #if $8 isn't zero, there is a partial match
+
+	#printsthat there is no match at all
+printNoMatch1:	li	$v0, 4
+		la	$a0, no_match
+		syscall
+	
+	#prints the new line char
+		la	$a0, nl
+		syscall
+
+	#exits the program
+		li	$v0, 10
+		syscall
+		
+	#prints out the partial match
+printNoMatch2:	li	$v0, 4
+		la	$a0, no_match
+		syscall
+		
+	#prints out the new line char
+		la	$a0, nl
+		syscall
+
+	#prints out the length message
+		la	$a0, length
+		syscall
+
+	#moves the value of the length in order to print it
+		move	$a0, $8
+		li	$v0, 1
+		syscall
+
+	#prints out the new line char
+		li	$v0, 4
+		la	$a0, nl
+		syscall
+
+	#prints out the index message
+		la	$a0, index
+		syscall
+
+	#subtracts 1 from the index value due to over incrementing on loops
+		sub	$9, $9, $15
+
+	#moves the value of the index in $9 in order to print it
+		move	$a0, $9
+		li	$v0, 1
+		syscall
+
+	#prints out the new line char
+		li	$v0, 4
+		la	$a0, nl
+		syscall
+
+	#exits the program
+		li	$v0, 10
+		syscall
+
+	#prints out that there was a match found
+printMatch:	sub	$7, $7, $15 #subtracts one from the index due to over incrementing
+
+	#prints out the match found message
+		li	$v0, 4
+		la	$a0, match
+		syscall
+
+	#prints out the new line char
+		la	$a0, nl
+		syscall
+
+	#prints out the index message
+		la	$a0, index
+		syscall
+		
+	#prints out the value in $7 which is the index of a perfect match
+		move	$a0, $7
+		li	$v0, 1
+		syscall
+
+	#prints out the new line char
+		la	$a0, nl
+		li	$v0, 4
+		syscall
+
+	#exits the program
+		li	$v0, 10
+		syscall

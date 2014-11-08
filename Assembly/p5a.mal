@@ -1,0 +1,129 @@
+#Geraldo Martinez
+#gm979351
+#Fri_1_40
+
+#All of my variable declarations
+	.data
+prompt:	.asciiz "Please type an integer: "	#
+out1:	.asciiz "No. of leading 0's = "	#The prompt for positive integers
+out2:	.asciiz "No. of leading 1's = "	#Prompt for negative integers
+nl:	.asciiz	"\n"	#Newline character
+i1:	.asciiz	"32"	#Stores 32 into i1
+mask:	.word	0x80000000	#Stores the mask onto mask.
+	.text
+	.globl 	main
+
+#main method
+main:
+	lw	$5, mask	#loads the word mask onto $5.
+	li	$12, 31		#loads integer 31 onto $12
+	li	$11, 0		#Counter register, sets it to 0.
+
+#Prints out the prompt to the user
+	li	$v0, 4
+	la	$a0, prompt
+	syscall
+
+#Scans an integer from the user and stores it onto $v0.
+	li	$v0, 5
+	syscall
+
+	move	$20, $v0	#load inputted integer into $20
+
+#if user inputted 0, jumps to printZ.
+
+	beq	$20, $0, printZ
+
+#if the user inputs a number higher than 0, it goes to jump1
+
+	bge	$20, 1, jump1
+
+#if the user inputs a negative number, it goest to jump2
+
+	blt	$20, $0, jump2
+
+#prints the number 32
+printZ:	
+
+#Prints out the out1 string.
+	li	$v0, 4
+	la	$a0, out1
+	syscall
+
+#Prints out 32 which is stored in i1.
+	li	$v0, 4
+	la	$a0, i1
+	syscall
+
+#Prints out the new line character
+	li	$v0, 4
+	la	$a0, nl
+	syscall
+
+#Exit command
+	li	$v0, 10
+	syscall
+
+#If the user entered a positive integer.
+jump1:	
+	blt	$12, $11, printP	#if $12 is less than $11, then it jumps to printP
+	and	$9, $20, $5	#AND inputted number with mask
+	bne	$9, $0, printP	#if $9 is not equal to 0, then sign bit was a 1. jump to print	
+	addi	$11, $11, 1	#Updates the counter
+	sll	$20, $20, 1	#Shifts the inputted number by 1 to the left in order check the next bit
+	j	jump1	#Jumps back to the beginning of jump1
+
+#Prints out the number of zeros.
+printP:	
+
+#Prints out the out1 string statement.
+	li	$v0, 4
+	la	$a0, out1
+	syscall
+
+#Moves the value of $11 onto $a0, then prints the integer
+	move	$a0, $11
+	li	$v0, 1	
+	syscall
+
+#Prints out the newline char
+	li	$v0, 4
+	la	$a0, nl
+	syscall
+
+#Exit command.
+	li	$v0, 10
+	syscall
+
+#if the user entered a negative integer.
+
+jump2:	
+	bgt	$11, $12, printN	#if $11 is greater than $12, then printN
+	and	$9, $20, $5	#ANDs inputted number with mask and stores it onto $9
+	beq	$9, $0, printN	#if $9 is equal to zero, then go to printN
+	addi	$11, $11, 1	#Updates the counter
+	sll	$20, $20, 1	#Left shift the inputted number by 1
+	j	jump2	#jumps back to the top of jump2
+
+#Prints out the number of ones in front of inputted number.
+printN:
+
+#Prints out the out2 for number of ones.
+	li	$v0, 4	
+	la	$a0, out2
+	syscall
+
+#Stores the value of $11 onto $a0, then prints it out
+	move	$a0, $11
+	li	$v0, 1
+	syscall
+
+#prints the newline char
+	li	$v0, 4
+	la	$a0, nl
+	syscall
+	
+#exits the program.
+
+	li	$v0, 10
+	syscall
